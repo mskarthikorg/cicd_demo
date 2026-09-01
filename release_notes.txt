@@ -1,1 +1,5 @@
-fixes codemagic env - updated the env
+Bug fixes and improvements.
+
+- Updated CI/CD pipeline
+- Fixed Firebase App Distribution
+- Improved application stability

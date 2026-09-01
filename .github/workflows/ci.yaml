@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   pull_request:
@@ -10,10 +10,9 @@ on:
       - main
 
 jobs:
-  # ---------------------------------------------------------
-  # PR CHECKS
-  # Runs only when a Pull Request targets main.
-  # ---------------------------------------------------------
+  # =========================================================
+  # PR VALIDATION
+  # =========================================================
   analyze_and_test:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -66,34 +65,42 @@ jobs:
           path: coverage/lcov.info
 
 
-  # ---------------------------------------------------------
-  # CODEMAGIC TRIGGER
-  # Runs only after code reaches main.
-  # Normally this happens after the admin merges a PR.
-  # ---------------------------------------------------------
-  trigger_codemagic:
+  # =========================================================
+  # ANDROID FIREBASE DISTRIBUTION
+  #
+  # Runs only AFTER something is merged/pushed to main.
+  # =========================================================
+  deploy_android:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
-    env:
-      CODEMAGIC_API_TOKEN: ${{ secrets.CODEMAGIC_API_TOKEN }}
-      CODEMAGIC_APP_ID: ${{ secrets.CODEMAGIC_APP_ID }}
-
     steps:
-      - name: Trigger Codemagic Firebase distribution build
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.1'
+          channel: 'stable'
+          cache: true
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Create Firebase service account file
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
-          echo "Triggering Codemagic Android Firebase build..."
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
 
-          RESPONSE=$(curl -sS --fail-with-body \
-            -H "Content-Type: application/json" \
-            -H "x-auth-token: ${CODEMAGIC_API_TOKEN}" \
-            -X POST \
-            --data "{
-              \"appId\": \"${CODEMAGIC_APP_ID}\",
-              \"workflowId\": \"android-firebase\",
-              \"branch\": \"main\"
-            }" \
-            https://api.codemagic.io/builds)
-
-          echo "Codemagic build successfully triggered."
-          echo "$RESPONSE"
+      - name: Deploy Android APK to Firebase
+        env:
+          FIREBASE_ANDROID_APP_ID: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
+        run: |
+          cd android
+          bundle exec fastlane firebase
