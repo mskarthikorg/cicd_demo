@@ -1,1 +1,1 @@
-fixes codemagic env - updated
+fixes codemagic env - updated the env
