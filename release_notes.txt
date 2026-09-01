@@ -1,5 +1,1 @@
-Bug fixes and improvements.
-
-- Improved login validation
-- Fixed Firebase initialization
-- Updated application UI
+fixes codemagic env
