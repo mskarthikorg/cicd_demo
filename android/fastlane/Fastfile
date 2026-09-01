@@ -1,0 +1,62 @@
+default_platform(:android)
+
+platform :android do
+  desc "Build release APK and distribute to Firebase App Distribution"
+
+  lane :firebase do
+    project_root = File.expand_path("../..", __dir__)
+
+    apk_path = File.join(
+      project_root,
+      "build",
+      "app",
+      "outputs",
+      "flutter-apk",
+      "app-release.apk"
+    )
+
+    release_notes_path = File.join(
+      project_root,
+      "release_notes.txt"
+    )
+
+    # -------------------------------------------------------
+    # Flutter dependencies
+    # -------------------------------------------------------
+    sh("cd '#{project_root}' && flutter pub get")
+
+    # -------------------------------------------------------
+    # Build release APK
+    # -------------------------------------------------------
+    sh("cd '#{project_root}' && flutter build apk --release")
+
+    # -------------------------------------------------------
+    # Verify APK exists
+    # -------------------------------------------------------
+    unless File.exist?(apk_path)
+      UI.user_error!("APK not found at #{apk_path}")
+    end
+
+    UI.success("APK generated successfully:")
+    UI.message(apk_path)
+
+    # -------------------------------------------------------
+    # Firebase App Distribution
+    # -------------------------------------------------------
+    firebase_app_distribution(
+      app: ENV["FIREBASE_ANDROID_APP_ID"],
+
+      service_credentials_file: ENV["GOOGLE_APPLICATION_CREDENTIALS"],
+
+      groups: "karthik-testing-group",
+
+      release_notes_file: release_notes_path,
+
+      android_artifact_type: "APK",
+
+      android_artifact_path: apk_path
+    )
+
+    UI.success("APK successfully distributed to Firebase App Distribution!")
+  end
+end
