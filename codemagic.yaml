@@ -28,6 +28,6 @@ workflows:
           app_id: $FIREBASE_ANDROID_APP_ID
 
           groups:
-            - testers
+            - karthik-testing-group
 
           artifact_type: apk
