@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main]
   push:
-    branches: [main, develop]
+    branches: [main]
 
 jobs:
   analyze_and_test:
@@ -14,7 +14,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.44.1'   # pin to your project's version
+          flutter-version: '3.44.1'
           channel: 'stable'
           cache: true
 
