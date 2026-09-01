@@ -14,7 +14,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.35.0'   # pin to your project's version
+          flutter-version: '3.44.1'   # pin to your project's version
           channel: 'stable'
           cache: true
 
